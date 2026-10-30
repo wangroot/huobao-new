@@ -135,8 +135,11 @@ npm run generate
 cd ..
 docker compose config --quiet
 docker build -t huobao-drama-custom:4.0.9-fixes .
+node scripts/docker-smoke.mjs
 ```
 
 `backend/tests/server-fixes.test.ts` 使用临时 SQLite 和本地 HTTP 模拟接口，不需要 Key，不提交收费生成任务。仓库附带 GitHub Actions，执行测试、类型检查、Docker 构建及容器健康和页面检查。
+
+`scripts/docker-smoke.mjs` 创建临时容器及数据卷，检查非 root 运行、页面、重启持久化、FFmpeg 编码，并在 Linux 容器内执行后端回归测试。结束后删除它自己创建的容器和卷，不操作正常部署的数据。
 
 原仓库部分结构型历史测试仍假定 MySQL、旧模型模板或固定 Seedance 前缀；新增功能的回归入口为 `npm run test:server-fixes`。不把历史断言全部通过作为此次验证结论。

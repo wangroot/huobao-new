@@ -5,7 +5,7 @@ set -e
 workspace="${WORKSPACE_PATH:-/app/data/workspace}"
 if [ ! -e "$workspace/.template-version" ]; then
   mkdir -p "$workspace"
-  cp -an /app/workspace-template/. "$workspace/"
+  cp -Rn /app/workspace-template/. "$workspace/"
   touch "$workspace/.template-version"
 fi
 
