@@ -1,0 +1,18 @@
+services:
+  app:
+    image: ${HUOBAO_IMAGE:-huobao-drama-custom:4.0.9-fixes}
+    build:
+      context: .
+      args:
+        HUOBAO_VERSION: ${HUOBAO_VERSION:-4.0.9-fixes}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
+    init: true
+    ports:
+      - "${HUOBAO_BIND:-127.0.0.1}:${HUOBAO_PORT:-5679}:5679"
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+    volumes:
+      - ${HUOBAO_DATA_PATH:-./deploy-data}:/app/data
+    restart: unless-stopped
+    stop_grace_period: 30s

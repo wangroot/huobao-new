@@ -1,0 +1,36 @@
+name: Server fixes and Docker
+on:
+  pull_request:
+  push:
+    branches: [master, main, fix/volcengine-docker-task-cleanup]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Use public registry lockfiles
+        run: |
+          node -e "const fs=require('fs');for(const dir of ['backend','frontend']){const f=dir+'/package-lock.json';const l=JSON.parse(fs.readFileSync(f));for(const p of Object.values(l.packages||{}))delete p.resolved;fs.writeFileSync(f,JSON.stringify(l,null,2))}"
+      - run: npm ci --no-audit --no-fund
+        working-directory: backend
+      - run: npm run test:server-fixes && npm run typecheck
+        working-directory: backend
+      - run: docker compose config --quiet
+      - name: Build modified source and smoke-test container
+        run: |
+          docker build --build-arg HUOBAO_VERSION=4.0.9-fixes -t huobao-drama:test .
+          docker run -d --name huobao-test -p 127.0.0.1:5679:5679 huobao-drama:test
+          trap 'docker logs huobao-test; docker rm -f huobao-test' EXIT
+          for i in $(seq 1 60); do
+            if curl --fail http://127.0.0.1:5679/api/v1/health; then break; fi
+            sleep 2
+          done
+          curl --fail http://127.0.0.1:5679/api/v1/health
+          curl --fail http://127.0.0.1:5679/settings
+          curl --fail http://127.0.0.1:5679/drama/1/episode/1
